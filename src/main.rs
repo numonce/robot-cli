@@ -3,7 +3,7 @@ use crossterm::event::{read, Event, KeyModifiers};
 use crossterm::style::*;
 use crossterm::ExecutableCommand;
 use std::io::{stdout, Write};
-use std::net::{TcpStream,UdpSocket};
+use std::net::{TcpStream, UdpSocket};
 
 fn terminal() -> crossterm::Result<()> {
     let mut stdout = stdout();
@@ -96,6 +96,7 @@ fn tcp_connection(ip: &str, port: &str) -> Result<(), Box<dyn std::error::Error>
     let target = format!("{}:{}", ip.to_string(), port.to_string());
     let mut stream = TcpStream::connect(&target)?;
     terminal()?;
+    crossterm::terminal::enable_raw_mode()?;
     let q = crossterm::event::KeyCode::Char('q');
     let w = crossterm::event::KeyCode::Char('w');
     let a = crossterm::event::KeyCode::Char('a');
@@ -136,6 +137,7 @@ fn udp_connection(ip: &str, port: &str) -> Result<(), Box<dyn std::error::Error>
     let target = format!("{}:{}", ip.to_string(), port.to_string());
     socket.connect(target)?;
     terminal()?;
+    crossterm::terminal::enable_raw_mode()?;
     let q = crossterm::event::KeyCode::Char('q');
     let w = crossterm::event::KeyCode::Char('w');
     let a = crossterm::event::KeyCode::Char('a');
@@ -163,7 +165,6 @@ fn udp_connection(ip: &str, port: &str) -> Result<(), Box<dyn std::error::Error>
             let buf = "4\n".as_bytes();
             socket.send(buf)?;
         }
-        
     }
     Ok(())
 }
@@ -200,7 +201,6 @@ fn init() -> Result<(), Box<dyn std::error::Error>> {
 
     let ip = args.value_of("IP").unwrap();
     let port = args.value_of("port").unwrap();
-    crossterm::terminal::enable_raw_mode()?;
     if args.is_present("udp") {
         udp_connection(ip, port)?;
     } else {
@@ -213,11 +213,6 @@ fn init() -> Result<(), Box<dyn std::error::Error>> {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let res = init();
     if let Err(e) = res {
-        crossterm::terminal::disable_raw_mode()?;
-        stdout().execute(ResetColor)?;
-        stdout().execute(crossterm::terminal::Clear(
-            crossterm::terminal::ClearType::All,
-        ))?;
         eprintln!("{:?}", e);
     } else {
         crossterm::terminal::disable_raw_mode()?;
